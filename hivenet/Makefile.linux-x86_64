@@ -1,0 +1,30 @@
+CFLAGS = -DLINUX -D_X86_64 -m64
+CFLAGS += -I$(COMMON_INC) -I$(TOR_INC)
+LDFLAGS = -L$(LIB) -l$(LIBTOR)
+#-lpthread -ldl -lm -L$(LIB) -l$(LIBSSL) -l$(LIBTLS) -l$(LIBCRYPTO)
+
+.PHONY: all
+all: debug release
+
+.PHONY: debug
+debug: $(HIVENET_BASENAME)-hivenet-dbg.o
+
+.PHONY: release
+release: $(HIVENET_BASENAME)-hivenet-rel.o
+
+$(HIVENET_BASENAME)-hivenet-dbg.o:
+	$(CC) $(CFLAGS)  $(DBGFLAGS) -c hivenet.c $(LDFLAGS) -o $(OBJ)/$@
+	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
+
+$(HIVENET_BASENAME)-hivenet-rel.o:
+	$(CC) $(CFLAGS) -c hivenet.c $(LDFLAGS) -o $(OBJ)/$@
+	#@strip $(STRIPFLAGS) $(OBJ)/$@
+	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
+
+.PHONY: clean
+clean:
+	@make -f ./Makefile clean
+
+.PHONY: tarball
+tarball:
+	@make -f ./Makefile tarball
