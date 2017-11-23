@@ -1,0 +1,34 @@
+CFLAGS = -DLINUX -D_X86_64 -m64 -std=c99
+
+CFLAGS += -I$(COMMON_INC) -I$(TOR) -I$(TOR_INC) -I$(TOR_INC)/ext -I$(TOR_INC)/common
+LDFLAGS = -lpthread -L$(LIB) -ltor
+
+#-lpthread -ldl -lm -L$(LIB) -l$(LIBSSL) -l$(LIBTLS) -l$(LIBCRYPTO)
+
+.PHONY: all
+all: debug release
+
+.PHONY: debug
+debug: $(TORINSTANCE_BASENAME)-torinstance-dbg.o
+
+.PHONY: release
+release: $(TORINSTANCE_BASENAME)-torinstance-rel.o
+
+## Torinstance
+###
+$(TORINSTANCE_BASENAME)-torinstance-dbg.o:
+	$(CC) $(CFLAGS) $(DBGFLAGS) -c torinstance.c $(LDFLAGS) -o $(OBJ)/$@
+	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
+
+$(TORINSTANCE_BASENAME)-torinstance-rel.o:
+	$(CC) $(CFLAGS) -c torinstance.c $(LDFLAGS) -o $(OBJ)/$@
+	#@strip $(STRIPFLAGS) $(OBJ)/$@
+	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
+
+.PHONY: clean
+clean:
+	@make -f ./Makefile clean
+
+.PHONY: tarball
+tarball:
+	@make -f ./Makefile tarball

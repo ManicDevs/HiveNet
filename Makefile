@@ -26,6 +26,7 @@ export ZLIB_INC =
 export LIBTOR = tor
 export TOR = $(DEPS_DIR)/tor-master
 export TOR_INC = $(TOR)/src
+export TORINSTANCE_SRC = $(CWD)/torinstance
 
 export COMMON_INC = $(CWD)/common
 export COMMON_SRC = $(wildcard $(COMMON_INC)/*.c)
@@ -33,9 +34,9 @@ export COMMON_SRC = $(wildcard $(COMMON_INC)/*.c)
 export CC = gcc
 export DBGFLAGS = -DDEBUG -D_DEBUG -ggdb3 -O0
 
-CFLAGS = 
+CFLAGS =
 #-I$(COMMON_INC) -I$(LIBRESSL_INC) -D_GNU_SOURCE
-LDFLAGS = 
+LDFLAGS =
 #-lpthread -ldl -lm -L$(LIB) -l$(LIBSSL) -l$(LIBTLS) -l$(LIBCRYPTO)
 
 STRIPFLAGS = --strip-all --remove-section=.comment --remove-section=.note
@@ -55,7 +56,7 @@ default:
 	@echo " Administrative tasks¬"
 	@echo "  make clean		-- Clean Hivenet Environ"
 	@echo "  make clean-deps 	-- Clean Depends Environ"
-	@echo $(TOR_INC)
+	@echo
 
 .PHONY: all
 all: linux-x86_64
@@ -136,13 +137,25 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 				-e 's|libressl-2.6.3/libssl.a|libressl-2.6.3/ssl/.libs/libssl.a|' \
 				-e 's|libressl-2.6.3/libcrypto.a|libressl-2.6.3/crypto/.libs/libcrypto.a|' Makefile > Makefile.sed && \
 			mv Makefile.sed Makefile && make && make install;																			\
-		cp $(TOR)/src/or/libtor.a $(LIB)/libtor.a;				\
+		cp $(TOR)/src/or/libtor.a $(LIB);				\
+		cp $(TOR)/src/or/libtor-testing.a $(LIB);				\
+		cp $(TOR)/src/common/libor.a $(LIB);				\
+		cp $(TOR)/src/common/libor-ctime.a $(LIB);				\
+		cp $(TOR)/src/common/libor-event.a $(LIB);				\
+		cp $(TOR)/src/common/libcurve25519_donna.a $(LIB);				\
+		cp $(TOR)/src/trunnel/libor-trunnel.a $(LIB);				\
+		cp $(TOR)/src/ext/ed25519/ref10/libed25519_ref10.a $(LIB);				\
+		cp $(TOR)/src/ext/ed25519/donna/libed25519_donna.a $(LIB);				\
+		cp $(TOR)/src/ext/keccak-tiny/libkeccak-tiny.a $(LIB);				\
 		cp $(BUILD_DIR)/bin/tor* $(BIN);						\
 		echo " [+] Done building TOR";						\
 	else											\
 		echo " [*] Skipping building TOR";						\
 	fi
 	
+	@echo " [-] Building torinstance"
+	@make -C torinstance linux-x86_64
+	@echo " [+] Done building torinstance"
 	@echo " [-] Building dnstunnel"
 	@make -C dnstunnel linux-x86_64
 	@echo " [+] Done building dnstunnel"
@@ -151,15 +164,20 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 	@echo " [+] Done building hivenet"
 	@echo " [-] Linking objects to final build"
 	$(CC) $(CFLAGS) $(DBGFLAGS) \
-		$(OBJ)/dnstunnel-$@-*-dbg.o \
-		$(OBJ)/hivenet-$@-*-dbg.o \
-		$(LDFLAGS) \
+		-D"memset_s(W,WL,V,OL)=memset(W,V,OL)" \
+		$(OBJ)/torinstance-$@-torinstance-dbg.o \
+		$(OBJ)/dnstunnel-$@-dnstunnel-dbg.o \
+		$(OBJ)/hivenet-$@-hivenet-dbg.o \
+		$(LDFLAGS) -L$(LIB) -ltor -lor -lor-ctime -lor-crypto -lor-event -lor-trunnel -lcurve25519_donna -led25519_ref10 -led25519_donna -lkeccak-tiny \
+			-levent -lsystemd -lm -lz -lcap -llzma -lseccomp -lssl -lcrypto -lpthread \
 		-o $(BIN)/hivenet-$@-dbg
 	@strip $(STRIPFLAGS) $(BIN)/hivenet-$@-dbg
 	$(CC) $(CFLAGS) \
-		$(OBJ)/dnstunnel-$@-*-rel.o \
-		$(OBJ)/hivenet-$@-*-rel.o \
-		$(LDFLAGS) \
+		$(OBJ)/torinstance-$@-torinstance-rel.o \
+		$(OBJ)/dnstunnel-$@-dnstunnel-rel.o \
+		$(OBJ)/hivenet-$@-hivenet-rel.o \
+		$(LDFLAGS) -L$(LIB) -ltor -lor -lor-ctime -lor-crypto -lor-event -lor-trunnel -lcurve25519_donna -led25519_ref10 -led25519_donna -lkeccak-tiny \
+			-levent -lsystemd -lm -lz -lcap -llzma -lseccomp -lssl -lcrypto -lpthread \
 		-o $(BIN)/hivenet-$@
 	@strip $(STRIPFLAGS) $(BIN)/hivenet-$@
 	@echo " [+] Done linking ojects to final build"
@@ -211,4 +229,7 @@ clean: clean-obj clean-bin
 	@echo " [-] Cleaning dnstunnel"
 	@make -C dnstunnel clean
 	@echo " [+] Done cleaning dnstunnel"
+	@echo " [-] Cleaning torinstance"
+	@make -C torinstance clean
+	@echo " [+] Done cleaning torinstance"
 	@echo

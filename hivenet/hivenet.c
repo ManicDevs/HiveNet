@@ -1,12 +1,7 @@
 #include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <unistd.h>
 
+#include "torinstance.h"
 #include "dnstunnel.h"
-#include "icmpfs.h"
-
-#include <or/tor_api.h>
 
 int hivenet_init(int argc, char *argv[])
 {
@@ -14,9 +9,10 @@ int hivenet_init(int argc, char *argv[])
     
     printf("-> hivenet_init()\n");
     
+    ret += torinstance_init(argc, argv);
     ret += dnstunnel_init(argc, argv);
     
-    printf("Hello\n");
+    printf("Hello: %d\n", ret);
     
     return ret;
 }

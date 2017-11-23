@@ -1,6 +1,6 @@
-CFLAGS = -DLINUX -D_X86_64 -m64
-CFLAGS += -I$(COMMON_INC) -I$(TOR_INC)
-LDFLAGS = -L$(LIB) -l$(LIBTOR)
+CFLAGS = -DLINUX -D_X86_64 -m64 -std=c99
+CFLAGS += -I$(COMMON_INC) -I$(TOR_INC) -I$(TOR_INC)/or -I$(TOR_INC)/ext -I$(TOR_INC)/ext/trunnel -I$(TOR_INC)/win32 -I$(TOR_INC)/common -I$(TOR_INC)/trunnel
+LDFLAGS = -lpthread -L$(LIB) -l$(LIBTOR)
 #-lpthread -ldl -lm -L$(LIB) -l$(LIBSSL) -l$(LIBTLS) -l$(LIBCRYPTO)
 
 .PHONY: all
