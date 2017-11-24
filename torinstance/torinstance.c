@@ -13,19 +13,29 @@
 
 void *torinstance_init(void *_)
 {
-    int argc = 4;
+    int argc = 13; // argv[0] + argv[*]'s below + 1
+#ifdef _DEBUG
+    argc--;
+#endif
     char *argv[argc];
     
     printf("-> torinstance_init()\n");
     
-    argv[1] = "--quiet";
-    argv[2] = "--SocksPort";
-    argv[3] = "9050";
-    argv[4] = "--HiddenServiceDir";
-    argv[5] = "./001";
-    argv[6] = "--HiddenServicePort";
-    argv[7] = "80 127.0.0.1:80";
-    
+    argv[1] = "--SocksPort";
+    argv[2] = "9050";
+    argv[3] = "--ignore-missing-torrc";
+    argv[4] = "--GeoIPFile";
+    argv[5] = ".";
+    argv[6] = "--GeoIPv6File";
+    argv[7] = ".";
+    argv[8] = "--HiddenServiceDir";
+    argv[9] = "torhs";
+    argv[10] = "--HiddenServicePort";
+    argv[11] = "80 127.0.0.1:80";
+#ifndef _DEBUG
+    argv[argc-1] = "--quiet";
+#endif
+
     tor_main_configuration_t *cfg = tor_main_configuration_new();
     tor_main_configuration_set_command_line(cfg, argc, argv);
     tor_run_main(cfg);
