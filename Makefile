@@ -150,16 +150,16 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 		echo " [*] Skipping building LIBZLIB";						\
 	fi
 	
-	if [ ! -f "$(BUILD_DIR)/bin/tor" ]; then						\
+	if [ ! -f "$(TOR)/src/or/tor" ]; then						\
 		echo " [-] Building LIBTOR";							\
 		cd $(TOR) && ./autogen.sh && ./configure --host=x86_64-pc-linux-gnu			\
 			--enable-static-libevent --enable-static-openssl --enable-static-zlib \
 			--with-libevent-dir=$(EVENT) --with-openssl-dir=$(LIBRESSL) --with-zlib-dir=$(ZLIB)		\
-			--disable-asciidoc --disable-systemd --disable-system-torrc --prefix=$(BUILD_DIR) &&		\
+			--disable-asciidoc --disable-systemd --disable-system-torrc --prefix=/tmp &&		\
 			sed -e 's|libevent-2.1.8-stable/libevent.a|libevent-2.1.8-stable/.libs/libevent.a|' \
 				-e 's|libressl-2.6.3/libssl.a|libressl-2.6.3/ssl/.libs/libssl.a|' \
 				-e 's|libressl-2.6.3/libcrypto.a|libressl-2.6.3/crypto/.libs/libcrypto.a|' Makefile > Makefile.sed && \
-			mv Makefile.sed Makefile && make && make install;																			\
+			mv Makefile.sed Makefile && make;																			\
 		cp $(TOR)/src/or/libtor*.a $(LIB);				\
 		cp $(TOR)/src/common/libor*.a $(LIB);				\
 		cp $(TOR)/src/common/libcurve25519_donna.a $(LIB);				\
@@ -167,7 +167,7 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 		cp $(TOR)/src/ext/ed25519/ref10/libed25519_ref10.a $(LIB);				\
 		cp $(TOR)/src/ext/ed25519/donna/libed25519_donna.a $(LIB);				\
 		cp $(TOR)/src/ext/keccak-tiny/libkeccak-tiny.a $(LIB);				\
-		cp $(BUILD_DIR)/bin/tor* $(BIN);						\
+		cp $(TOR)/src/or/tor* $(BIN);						\
 		echo " [+] Done building LIBTOR";						\
 	else											\
 		echo " [*] Skipping building LIBTOR";						\
