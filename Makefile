@@ -167,7 +167,10 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 		cp $(TOR)/src/ext/ed25519/ref10/libed25519_ref10.a $(LIB);				\
 		cp $(TOR)/src/ext/ed25519/donna/libed25519_donna.a $(LIB);				\
 		cp $(TOR)/src/ext/keccak-tiny/libkeccak-tiny.a $(LIB);				\
-		cp $(TOR)/src/or/tor* $(BIN);						\
+		cp $(TOR)/src/or/tor $(BIN);						\
+		cp $(TOR)/contrib/client-tools/torify $(BIN);						\
+		cp $(TOR)/src/tools/tor-gencert $(BIN);						\
+		cp $(TOR)/src/tools/tor-resolve $(BIN);						\
 		echo " [+] Done building LIBTOR";						\
 	else											\
 		echo " [*] Skipping building LIBTOR";						\
