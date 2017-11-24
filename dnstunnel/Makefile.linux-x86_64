@@ -1,6 +1,6 @@
 CFLAGS = -DLINUX -D_X86_64 -m64
-CFLAGS += -I$(COMMON_INC) -I$(LIBRESSL_INC)
-LDFLAGS = 
+CFLAGS += -I$(COMMON_INC)
+LDFLAGS = -s -fPIC
 
 .PHONY: all
 all: debug release
@@ -17,7 +17,6 @@ $(DNSTUNNEL_BASENAME)-dnstunnel-dbg.o:
 
 $(DNSTUNNEL_BASENAME)-dnstunnel-rel.o:
 	@$(CC) $(CFLAGS) -c dnstunnel.c $(LDFLAGS) -o $(OBJ)/$@
-	#@strip $(STRIPFLAGS) $(OBJ)/$@
 	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
 
 .PHONY: clean

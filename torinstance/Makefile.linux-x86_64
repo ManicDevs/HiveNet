@@ -1,9 +1,6 @@
 CFLAGS = -DLINUX -D_X86_64 -m64 -std=c99
-
-CFLAGS += -I$(COMMON_INC) -I$(TOR) -I$(TOR_INC) -I$(TOR_INC)/ext -I$(TOR_INC)/common
-LDFLAGS = -lpthread -L$(LIB) -ltor
-
-#-lpthread -ldl -lm -L$(LIB) -l$(LIBSSL) -l$(LIBTLS) -l$(LIBCRYPTO)
+CFLAGS += -I$(COMMON_INC) -I$(TOR_INC)
+LDFLAGS = -s -fPIC
 
 .PHONY: all
 all: debug release
@@ -22,7 +19,6 @@ $(TORINSTANCE_BASENAME)-torinstance-dbg.o:
 
 $(TORINSTANCE_BASENAME)-torinstance-rel.o:
 	$(CC) $(CFLAGS) -c torinstance.c $(LDFLAGS) -o $(OBJ)/$@
-	#@strip $(STRIPFLAGS) $(OBJ)/$@
 	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
 
 .PHONY: clean

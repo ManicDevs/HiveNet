@@ -1,4 +1,7 @@
+#include <errno.h>
 #include <stdio.h>
+#include <string.h>
+#include <pthread.h>
 
 #include "torinstance.h"
 #include "dnstunnel.h"
@@ -6,13 +9,22 @@
 int hivenet_init(int argc, char *argv[])
 {
     int ret = 0;
+    pthread_t tor_thrd;
+    pthread_attr_t attr;
     
     printf("-> hivenet_init()\n");
     
-    ret += torinstance_init(argc, argv);
+    if((ret = pthread_create(&tor_thrd, NULL, &torinstance_init, (void*)0)) != 0)
+    {
+        printf(" [!] Error: pthread_create failure!\n");
+        return ret;
+    }
+    
+    pthread_detach(tor_thrd);
+    
     ret += dnstunnel_init(argc, argv);
     
-    printf("Hello: %d\n", ret);
+    while(1);
     
     return ret;
 }

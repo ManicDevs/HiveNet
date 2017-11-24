@@ -15,6 +15,10 @@ export LIBCRYPTO = crypto
 export LIBRESSL = $(DEPS_DIR)/libressl-2.6.3
 export LIBRESSL_INC = $(LIBRESSL)/include
 
+export LIBSYSTEMD = systemd
+export SYSTEMD = $(DEPS_DIR)/systemd-221
+export SYSTEMD_INC =
+
 export LIBEVENT = event
 export EVENT = $(DEPS_DIR)/libevent-2.1.8-stable
 export EVENT_INC =
@@ -32,14 +36,17 @@ export COMMON_INC = $(CWD)/common
 export COMMON_SRC = $(wildcard $(COMMON_INC)/*.c)
 
 export CC = gcc
-export DBGFLAGS = -DDEBUG -D_DEBUG -ggdb3 -O0
+export DBGFLAGS = -DDEBUG -D_DEBUG -ggdb3
 
-CFLAGS =
-#-I$(COMMON_INC) -I$(LIBRESSL_INC) -D_GNU_SOURCE
-LDFLAGS =
-#-lpthread -ldl -lm -L$(LIB) -l$(LIBSSL) -l$(LIBTLS) -l$(LIBCRYPTO)
+export STRIPFLAGS = --strip-all --strip-unneeded -g -R .eh_frame -R .eh_frame_hdr -R.comment -R .note
 
-STRIPFLAGS = --strip-all --remove-section=.comment --remove-section=.note
+CFLAGS = -Wall -fomit-frame-pointer
+LDFLAGS = -L$(LIB) -ltor -lor -lor-ctime -lor-crypto -lor-event -lor-trunnel -lcurve25519_donna -led25519_ref10 -led25519_donna -lkeccak-tiny \
+	-levent -lssl -lcrypto -lpthread -lm -lz -lcap -llzma -lseccomp
+	
+DBG_LDFLAGS = -L$(LIB) -ltor-testing -lor-testing -lor-ctime-testing -lor-crypto-testing -lor-event-testing \
+	-lor-trunnel-testing -lcurve25519_donna -led25519_ref10 -led25519_donna -lkeccak-tiny \
+	-levent -lssl -lcrypto -lpthread -lm -lz -lcap -llzma -lseccomp
 
 ifndef VERBOSE
 .SILENT:
@@ -78,29 +85,45 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 		echo " [+] Done extracting LIBRESSL";						\
 	fi
 	
+	#if [ ! -d "$(SYSTEMD)" ]; then									\
+	#	echo " [-] Extracting LIBSYSTEMD";							\
+	#	tar -xf deps/systemd-235.tar.xz -C deps/;			\
+	#	echo " [+] Done extracting LIBSYSTEMD";						\
+	#fi
+	
 	if [ ! -d "$(ZLIB)" ]; then						\
-		echo " [-] Extracting ZLIB";							\
+		echo " [-] Extracting LIBZLIB";							\
 		tar -xf	deps/zlib-1.2.11.tar.gz -C deps/;		\
-		echo " [+] Done extracting ZLIB";							\
+		echo " [+] Done extracting LIBZLIB";							\
 	fi
 	
 	if [ ! -d "$(TOR)" ]; then								\
-		echo " [-] Extracting TOR";							\
+		echo " [-] Extracting LIBTOR";							\
 		unzip deps/tor-master.zip -d deps/;						\
-		echo " [+] Done extracting TOR";						\
+		echo " [+] Done extracting LIBTOR";						\
 	fi
 	# Building
 	###
 	if [ ! -f "$(EVENT)/.libs/libevent.a" ]; then					\
-		echo " [-] Building EVENT";							\
+		echo " [-] Building LIBEVENT";							\
 		cd $(EVENT) && ./configure --host=x86_64-pc-linux-gnu \
 			 --enable-static --enable-shared --prefix=$(BUILD_DIR) && \
 			make && make install					\
 		cp $(BUILD_DIR)/lib/libevent*.a $(LIB);				\
-		echo " [+] Done building EVENT";						\
+		echo " [+] Done building LIBEVENT";						\
 	else											\
-		echo " [*] Skipping building EVENT";						\
+		echo " [*] Skipping building LIBEVENT";						\
 	fi
+	
+	#if [ ! -f "$(SYSTEMD)/build/src/libsystemd/libsystemd.a" ]; then					\
+	#	echo " [-] Building LIBSYSTEMD";							\
+	#	cd $(SYSTEMD) && ./configure --prefix=$(BUILD_DIR) -Drootprefix=$(BUILD_DIR)/usr -D -Dlibcryptsetup=false -Dpam=false -Dima=false -Dseccomp=false -Dsmack=false -Dzlib=false -Dxz=false -Dlz4=false -Dbzip2=false -Dacl=false -Dgcrypt=false -Dqrencode=false -Dgnutls=false -Dlibcurl=false -Didn=false -Dlibidn=false -Dnss-systemd=false -Dhostnamed=false -Dtimedated=false -Dtimesyncd=false -Dlocaled=false -Dnetworkd=false -Dresolve=false -Dcoredump=false -Dpolkit=false -Defi=false -Dkmod=false -Dxkbcommon=false -Dblkid=false -Ddbus=false -Dglib=false -Dmyhostname=false -Dhwdb=false -Dtpm=false -Dman=false -Dutmp=false -Dldconfig=false -Dhibernate=false -Dadm-group=false -Dwheel-group=false -Dgshadow=false -Dlibiptc=false -Delfutils=false -Dbinfmt=false -Dvconsole=false -Dquotacheck=false -Dtmpfiles=false -Denvironment-d=false -Dsysusers=false -Dfirstboot=false -Drandomseed=false -Dbacklight=false -Drfkill=false -Dlogind=false -Dmachined=false &&		\
+	#		CFLAGS=-static make && DEST_DIR=$(BUILD_DIR) make install
+	#	cp $(BUILD_DIR)/lib/libevent*.a $(LIB);				\
+	#	echo " [+] Done building LIBSYSTEMD";						\
+	#else											\
+	#	echo " [*] Skipping building LIBSYSTEMD";						\
+	#fi
 	
 	if [ ! -f "$(LIBRESSL)/ssl/.libs/libssl.a" ]; then					\
 		echo " [-] Building LIBRESSL";									\
@@ -116,41 +139,38 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 	fi
 	
 	if [ ! -f "$(ZLIB)/libz.a" ]; then					\
-		echo " [-] Building ZLIB";									\
+		echo " [-] Building LIBZLIB";									\
 		cd $(ZLIB) && ./configure --shared --prefix=$(BUILD_DIR) && 	\
 			make && make install;							\
 		cd $(ZLIP) && ./configure --static --prefix=$(BUILD_DIR) &&		\
 			make && make install;										\
-		cp $(ZLIB)/lib/libz.a $(LIB)/libz.a;				\
-		echo " [+] Done building ZLIB";						\
+		cp $(BUILD_DIR)/lib/libz.a $(LIB)/libz.a;				\
+		echo " [+] Done building LIBZLIB";						\
 	else											\
-		echo " [*] Skipping building ZLIB";						\
+		echo " [*] Skipping building LIBZLIB";						\
 	fi
 	
 	if [ ! -f "$(BUILD_DIR)/bin/tor" ]; then						\
-		echo " [-] Building TOR";							\
+		echo " [-] Building LIBTOR";							\
 		cd $(TOR) && ./autogen.sh && ./configure --host=x86_64-pc-linux-gnu			\
 			--enable-static-libevent --enable-static-openssl --enable-static-zlib \
 			--with-libevent-dir=$(EVENT) --with-openssl-dir=$(LIBRESSL) --with-zlib-dir=$(ZLIB)		\
-			--disable-asciidoc --disable-system-torrc --prefix=$(BUILD_DIR) &&		\
+			--disable-asciidoc --disable-systemd --disable-system-torrc --prefix=$(BUILD_DIR) &&		\
 			sed -e 's|libevent-2.1.8-stable/libevent.a|libevent-2.1.8-stable/.libs/libevent.a|' \
 				-e 's|libressl-2.6.3/libssl.a|libressl-2.6.3/ssl/.libs/libssl.a|' \
 				-e 's|libressl-2.6.3/libcrypto.a|libressl-2.6.3/crypto/.libs/libcrypto.a|' Makefile > Makefile.sed && \
 			mv Makefile.sed Makefile && make && make install;																			\
-		cp $(TOR)/src/or/libtor.a $(LIB);				\
-		cp $(TOR)/src/or/libtor-testing.a $(LIB);				\
-		cp $(TOR)/src/common/libor.a $(LIB);				\
-		cp $(TOR)/src/common/libor-ctime.a $(LIB);				\
-		cp $(TOR)/src/common/libor-event.a $(LIB);				\
+		cp $(TOR)/src/or/libtor*.a $(LIB);				\
+		cp $(TOR)/src/common/libor*.a $(LIB);				\
 		cp $(TOR)/src/common/libcurve25519_donna.a $(LIB);				\
-		cp $(TOR)/src/trunnel/libor-trunnel.a $(LIB);				\
+		cp $(TOR)/src/trunnel/libor-trunnel*.a $(LIB);				\
 		cp $(TOR)/src/ext/ed25519/ref10/libed25519_ref10.a $(LIB);				\
 		cp $(TOR)/src/ext/ed25519/donna/libed25519_donna.a $(LIB);				\
 		cp $(TOR)/src/ext/keccak-tiny/libkeccak-tiny.a $(LIB);				\
 		cp $(BUILD_DIR)/bin/tor* $(BIN);						\
-		echo " [+] Done building TOR";						\
+		echo " [+] Done building LIBTOR";						\
 	else											\
-		echo " [*] Skipping building TOR";						\
+		echo " [*] Skipping building LIBTOR";						\
 	fi
 	
 	@echo " [-] Building torinstance"
@@ -168,18 +188,13 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 		$(OBJ)/torinstance-$@-torinstance-dbg.o \
 		$(OBJ)/dnstunnel-$@-dnstunnel-dbg.o \
 		$(OBJ)/hivenet-$@-hivenet-dbg.o \
-		$(LDFLAGS) -L$(LIB) -ltor -lor -lor-ctime -lor-crypto -lor-event -lor-trunnel -lcurve25519_donna -led25519_ref10 -led25519_donna -lkeccak-tiny \
-			-levent -lsystemd -lm -lz -lcap -llzma -lseccomp -lssl -lcrypto -lpthread \
-		-o $(BIN)/hivenet-$@-dbg
-	@strip $(STRIPFLAGS) $(BIN)/hivenet-$@-dbg
-	$(CC) $(CFLAGS) \
+		$(DBG_LDFLAGS) -o $(BIN)/hivenet-$@-dbg
+	$(CC) -s -O3 -Os $(CFLAGS) \
 		$(OBJ)/torinstance-$@-torinstance-rel.o \
 		$(OBJ)/dnstunnel-$@-dnstunnel-rel.o \
 		$(OBJ)/hivenet-$@-hivenet-rel.o \
-		$(LDFLAGS) -L$(LIB) -ltor -lor -lor-ctime -lor-crypto -lor-event -lor-trunnel -lcurve25519_donna -led25519_ref10 -led25519_donna -lkeccak-tiny \
-			-levent -lsystemd -lm -lz -lcap -llzma -lseccomp -lssl -lcrypto -lpthread \
-		-o $(BIN)/hivenet-$@
-	@strip $(STRIPFLAGS) $(BIN)/hivenet-$@
+		$(LDFLAGS) -o $(BIN)/hivenet-$@
+	#@strip $(STRIPFLAGS) $(BIN)/hivenet-$@
 	@echo " [+] Done linking ojects to final build"
 	@echo " [+] Done build for $@"
 	@echo

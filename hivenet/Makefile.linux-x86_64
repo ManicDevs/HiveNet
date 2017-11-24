@@ -1,7 +1,6 @@
 CFLAGS = -DLINUX -D_X86_64 -m64 -std=c99
-CFLAGS += -I$(COMMON_INC) -I$(TOR_INC) -I$(TOR_INC)/or -I$(TOR_INC)/ext -I$(TOR_INC)/ext/trunnel -I$(TOR_INC)/win32 -I$(TOR_INC)/common -I$(TOR_INC)/trunnel
-LDFLAGS = -lpthread -L$(LIB) -l$(LIBTOR)
-#-lpthread -ldl -lm -L$(LIB) -l$(LIBSSL) -l$(LIBTLS) -l$(LIBCRYPTO)
+CFLAGS += -I$(COMMON_INC)
+LDFLAGS = -s -fPIC -lpthread
 
 .PHONY: all
 all: debug release
@@ -18,7 +17,6 @@ $(HIVENET_BASENAME)-hivenet-dbg.o:
 
 $(HIVENET_BASENAME)-hivenet-rel.o:
 	$(CC) $(CFLAGS) -c hivenet.c $(LDFLAGS) -o $(OBJ)/$@
-	#@strip $(STRIPFLAGS) $(OBJ)/$@
 	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
 
 .PHONY: clean
