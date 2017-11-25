@@ -11,6 +11,7 @@
 
 #include <or/tor_api.h>
 
+#include "common.h"
 #include "torinstance.h"
 
 char *TOR_HIDDEN_SERVICE_PORTS[] =
@@ -23,11 +24,11 @@ char *TOR_HIDDEN_SERVICE_PORTS[] =
 void *torinstance_init(void *_)
 {
     int i, argc = 10; // argv[*]'s below + TOR_HIDDEN_SERVICE_PORTS_SIZE +- 1
-    char *argv[] = {};
+    char *argv[argc];
     
     printf("-> torinstance_init()\n");
     
-    argv[0] = "/";
+    argv[0] = ".";
     argv[1] = "--ignore-missing-torrc";
     argv[2] = "--GeoIPFile";
     argv[3] = TOR_GEOIPV4_FILE;
@@ -48,12 +49,23 @@ void *torinstance_init(void *_)
 #ifndef _DEBUG
     argc++;
     argv[argc-1] = "--quiet";
+#else
+    for(i = 0; i < argc; i++)
+    {
+        printf("[*] argv[%d] = %s\n", i, argv[i]);
+    }
 #endif
     
     tor_main_configuration_t *cfg = tor_main_configuration_new();
     tor_main_configuration_set_command_line(cfg, argc, argv);
     tor_run_main(cfg);
     tor_main_configuration_free(cfg);
+    
+    running = false;
+    
+#ifdef _DEBUG
+    printf("EXIT Sub ThreadID: %d\n", pthread_self());
+#endif
     
     return 0;
 }

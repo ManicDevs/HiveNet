@@ -7,6 +7,6 @@ typedef struct
     char *buffer;
 } response;
 
-int dnstunnel_init(int argc, char *argv[]);
+void *dnstunnel_init(void *_);
 
 #endif /* dnstunnel.h */
