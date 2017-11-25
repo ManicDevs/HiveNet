@@ -15,15 +15,6 @@ volatile bool running = true;
 
 static pthread_t main_thrd, torinst_thrd, dnstun_thrd;
 
-/*
-void ExitHandler(int signo)
-{
-    fprintf(stderr, "ExitHandler thread id: %d\n", pthread_self());
-    signal(signo, SIG_IGN);
-    exit(0);
-}
-*/
-
 int hivenet_init(int argc, char *argv[])
 {
     int pret = 0, ret = 0;
