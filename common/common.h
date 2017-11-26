@@ -1,6 +1,8 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
+#include <assert.h>
+#include <signal.h>
 #include <pthread.h>
 
 #define USERNAME "nobody"
@@ -21,6 +23,7 @@
 typedef int bool;
 
 extern volatile bool running;
+extern volatile bool torinst_running;
 
 void _sleep(int tosleep);
 

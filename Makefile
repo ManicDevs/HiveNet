@@ -15,10 +15,6 @@ export LIBCRYPTO = crypto
 export LIBRESSL = $(DEPS_DIR)/libressl-2.6.3
 export LIBRESSL_INC = $(LIBRESSL)/include
 
-export LIBSYSTEMD = systemd
-export SYSTEMD = $(DEPS_DIR)/systemd-221
-export SYSTEMD_INC =
-
 export LIBEVENT = event
 export EVENT = $(DEPS_DIR)/libevent-2.1.8-stable
 export EVENT_INC =
@@ -85,12 +81,6 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 		echo " [+] Done extracting LIBRESSL";						\
 	fi
 	
-	#if [ ! -d "$(SYSTEMD)" ]; then									\
-	#	echo " [-] Extracting LIBSYSTEMD";							\
-	#	tar -xf deps/systemd-235.tar.xz -C deps/;			\
-	#	echo " [+] Done extracting LIBSYSTEMD";						\
-	#fi
-	
 	if [ ! -d "$(ZLIB)" ]; then						\
 		echo " [-] Extracting LIBZLIB";							\
 		tar -xf	deps/zlib-1.2.11.tar.gz -C deps/;		\
@@ -114,16 +104,6 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 	else											\
 		echo " [*] Skipping building LIBEVENT";						\
 	fi
-	
-	#if [ ! -f "$(SYSTEMD)/build/src/libsystemd/libsystemd.a" ]; then					\
-	#	echo " [-] Building LIBSYSTEMD";							\
-	#	cd $(SYSTEMD) && ./configure --prefix=$(BUILD_DIR) -Drootprefix=$(BUILD_DIR)/usr -D -Dlibcryptsetup=false -Dpam=false -Dima=false -Dseccomp=false -Dsmack=false -Dzlib=false -Dxz=false -Dlz4=false -Dbzip2=false -Dacl=false -Dgcrypt=false -Dqrencode=false -Dgnutls=false -Dlibcurl=false -Didn=false -Dlibidn=false -Dnss-systemd=false -Dhostnamed=false -Dtimedated=false -Dtimesyncd=false -Dlocaled=false -Dnetworkd=false -Dresolve=false -Dcoredump=false -Dpolkit=false -Defi=false -Dkmod=false -Dxkbcommon=false -Dblkid=false -Ddbus=false -Dglib=false -Dmyhostname=false -Dhwdb=false -Dtpm=false -Dman=false -Dutmp=false -Dldconfig=false -Dhibernate=false -Dadm-group=false -Dwheel-group=false -Dgshadow=false -Dlibiptc=false -Delfutils=false -Dbinfmt=false -Dvconsole=false -Dquotacheck=false -Dtmpfiles=false -Denvironment-d=false -Dsysusers=false -Dfirstboot=false -Drandomseed=false -Dbacklight=false -Drfkill=false -Dlogind=false -Dmachined=false &&		\
-	#		CFLAGS=-static make && DEST_DIR=$(BUILD_DIR) make install
-	#	cp $(BUILD_DIR)/lib/libevent*.a $(LIB);				\
-	#	echo " [+] Done building LIBSYSTEMD";						\
-	#else											\
-	#	echo " [*] Skipping building LIBSYSTEMD";						\
-	#fi
 	
 	if [ ! -f "$(LIBRESSL)/ssl/.libs/libssl.a" ]; then					\
 		echo " [-] Building LIBRESSL";									\
@@ -197,7 +177,7 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 		$(OBJ)/dnstunnel-$@-dnstunnel-rel.o \
 		$(OBJ)/hivenet-$@-hivenet-rel.o \
 		$(LDFLAGS) -o $(BIN)/hivenet-$@
-	#@strip $(STRIPFLAGS) $(BIN)/hivenet-$@
+	@strip $(STRIPFLAGS) $(BIN)/hivenet-$@
 	@echo " [+] Done linking ojects to final build"
 	@echo " [+] Done build for $@"
 	@echo

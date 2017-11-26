@@ -28,7 +28,7 @@ void *torinstance_init(void *_)
     
     printf("-> torinstance_init()\n");
     
-    argv[0] = ".";
+    argv[0] = "null";
     argv[1] = "--ignore-missing-torrc";
     argv[2] = "--GeoIPFile";
     argv[3] = TOR_GEOIPV4_FILE;
@@ -61,9 +61,10 @@ void *torinstance_init(void *_)
     tor_run_main(cfg);
     tor_main_configuration_free(cfg);
     
-    running = false;
+    torinst_running = false;
     
 #ifdef _DEBUG
+    running = false;
     printf("EXIT Sub ThreadID: %d\n", pthread_self());
 #endif
     
