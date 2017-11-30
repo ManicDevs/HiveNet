@@ -165,20 +165,20 @@ linux-x86_64: $(wildcard obj/*-$@-*.o)
 	@echo " [-] Building hivenet"
 	@make -C hivenet linux-x86_64
 	@echo " [+] Done building hivenet"
-	@echo " [-] Linking objects to final build"
+	@echo " [-] Linking objects to hivenet-$@-* build"
 	$(CC) $(CFLAGS) $(DBGFLAGS) \
 		-D"memset_s(W,WL,V,OL)=memset(W,V,OL)" \
 		$(OBJ)/torinstance-$@-torinstance-dbg.o \
 		$(OBJ)/dnstunnel-$@-dnstunnel-dbg.o \
 		$(OBJ)/hivenet-$@-hivenet-dbg.o \
-		$(DBG_LDFLAGS) -o $(BIN)/hivenet-$@-dbg
+		$(DBG_LDFLAGS) -o $(BIN)/hivenet-$@-nocrypt-dbg
 	$(CC) -s -O3 -Os $(CFLAGS) \
 		$(OBJ)/torinstance-$@-torinstance-rel.o \
 		$(OBJ)/dnstunnel-$@-dnstunnel-rel.o \
 		$(OBJ)/hivenet-$@-hivenet-rel.o \
-		$(LDFLAGS) -o $(BIN)/hivenet-$@
-	@strip $(STRIPFLAGS) $(BIN)/hivenet-$@
-	@echo " [+] Done linking ojects to final build"
+		$(LDFLAGS) -o $(BIN)/hivenet-$@-nocrypt
+	@strip $(STRIPFLAGS) $(BIN)/hivenet-$@-nocrypt
+	@echo " [+] Done linking objects to hivenet-$@-* build"
 	@echo " [+] Done build for $@"
 	@echo
 
