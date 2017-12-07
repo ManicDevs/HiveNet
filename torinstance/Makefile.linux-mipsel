@@ -1,0 +1,30 @@
+TORINSTANCE_BASENAME = $(SERVER_BASENAME)-$(ARCH)
+
+CFLAGS = -DLINUX -D_MIPSEL -std=c99
+CFLAGS += -I$(COMMON_INC) -I$(TOR_INC)
+LDFLAGS = -s -fPIC -lpthread -static
+
+.PHONY: all
+all: debug release
+
+.PHONY: debug
+debug: $(TORINSTANCE_BASENAME)-torinstance-dbg.o
+
+.PHONY: release
+release: $(TORINSTANCE_BASENAME)-torinstance-rel.o
+
+$(TORINSTANCE_BASENAME)-torinstance-dbg.o:
+	@$(MUSL_CC) $(CFLAGS) $(DBGFLAGS) -c torinstance.c $(LDFLAGS) -o $(OBJ)/$@
+	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
+
+$(TORINSTANCE_BASENAME)-torinstance-rel.o:
+	@$(MUSL_CC) $(CFLAGS) -c torinstance.c $(LDFLAGS) -o $(OBJ)/$@
+	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
+
+.PHONY: clean
+clean:
+	@make -f ./Makefile clean
+
+.PHONY: tarball
+tarball:
+	@make -f ./Makefile tarball

@@ -1,6 +1,6 @@
 CFLAGS = -DLINUX -D_X86_64 -m64 -std=c99
-CFLAGS += -I$(COMMON_INC) -I$(TOR_INC)
-LDFLAGS = -s -fPIC
+CFLAGS += -I$(COMMON_INC)
+LDFLAGS = -s -fPIC -lpthread
 
 .PHONY: all
 all: debug release
@@ -11,14 +11,12 @@ debug: $(TORINSTANCE_BASENAME)-torinstance-dbg.o
 .PHONY: release
 release: $(TORINSTANCE_BASENAME)-torinstance-rel.o
 
-## Torinstance
-###
 $(TORINSTANCE_BASENAME)-torinstance-dbg.o:
-	$(CC) $(CFLAGS) $(DBGFLAGS) -c torinstance.c $(LDFLAGS) -o $(OBJ)/$@
+	AR=$(AR) LD=$(LD) $(CC) $(CFLAGS)  $(DBGFLAGS) -c torinstance.c $(LDFLAGS) -o $(OBJ)/$@
 	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
 
 $(TORINSTANCE_BASENAME)-torinstance-rel.o:
-	$(CC) $(CFLAGS) -c torinstance.c $(LDFLAGS) -o $(OBJ)/$@
+	AR=$(AR) LD=$(LD) $(CC) $(CFLAGS) -c torinstance.c $(LDFLAGS) -o $(OBJ)/$@
 	@md5sum $(OBJ)/$@ > $(OBJ)/$@.md5
 
 .PHONY: clean

@@ -1,8 +1,10 @@
 export SERVER_BASENAME = dnstunnel
-export DNSTUNNEL_BASENAME = $(SERVER_BASENAME)-linux-$(ARCH)
 
 .PHONY: all
-all: linux-x86_64
+all: linux-mipsel linux-x86_64
+
+linux-mipsel:
+	@make -f Makefile.linux-mipsel
 
 linux-x86_64:
 	@make -f Makefile.linux-x86_64

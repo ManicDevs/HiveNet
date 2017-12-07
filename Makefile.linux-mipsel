@@ -1,0 +1,179 @@
+export ARCH = linux-mipsel
+
+export DEPS_DIR = $(CWD)/deps
+export BUILD_DIR = $(DEPS_DIR)/build/linux-mipsel
+
+export LIBSSL = ssl
+export LIBTLS = tls
+export LIBCRYPTO = crypto
+export LIBRESSL = $(BUILD_DIR)/libressl-2.6.3
+export LIBRESSL_INC = $(LIBRESSL)/include
+
+export LIBEVENT = event
+export EVENT = $(BUILD_DIR)/libevent-2.1.8-stable
+export EVENT_INC = $(EVENT)/include
+
+export LIBZLIB = zlib
+export ZLIB = $(BUILD_DIR)/zlib-1.2.11
+export ZLIB_INC =
+
+export LIBTOR = tor
+export TOR = $(BUILD_DIR)/tor-master
+export TOR_INC = $(TOR)/src
+export TORINSTANCE_SRC = $(CWD)/torinstance
+
+export COMMON_INC = $(CWD)/common
+export COMMON_SRC = $(wildcard $(COMMON_INC)/*.c)
+
+export CC_DIR = $(DEPS_DIR)/cross-compilers/mipsel-linux-musl/bin
+export MUSL_AR = $(CC_DIR)/mipsel-linux-musl-ar
+export MUSL_CC = $(CC_DIR)/mipsel-linux-musl-gcc
+export MUSL_LD = $(CC_DIR)/mipsel-linux-musl-ld
+export MUSL_INC = $(CC_DIR)/../mipsel-linux-musl/include
+
+MUSL_STRIP = $(CC_DIR)/mipsel-linux-musl-strip
+STRIPFLAGS = --strip-all --strip-unneeded -g -R .eh_frame -R .eh_frame_hdr -R.comment -R .note
+
+RELFLAGS = -O -Wall -fomit-frame-pointer -I/usr/include -I$(LIBRESSL_INC)
+REL_LDFLAGS = -L$(LIB)/linux-mipsel -ltor -lor -lor-ctime -lor-crypto -lor-event -lor-trunnel -lcurve25519_donna -led25519_ref10 -led25519_donna -lkeccak-tiny \
+	-levent -lssl -lm -lcrypto -lpthread -lz -lcap -llzma -lseccomp
+
+DBGFLAGS = -DDEBUG -D_DEBUG -ggdb3 -I$(MUSL_INC) -I$(LIBRESSL_INC)
+DBG_LDFLAGS = -L$(LIB)/linux-mipsel -ltor-testing -lor-testing -lor-ctime-testing -lor-crypto-testing -lor-event-testing \
+	-lor-trunnel-testing -lcurve25519_donna -led25519_ref10 -led25519_donna -lkeccak-tiny \
+	-levent -lssl -lm -lcrypto -lpthread -lz -lcap -llzma -lseccomp
+
+default:
+	@echo
+	@echo " HiveNet - Land of the bees!"
+	@echo "  - linux-mipsel Build"
+	@echo
+
+.PHONY: all
+all: linux-mipsel
+
+linux-mipsel: $(wildcard obj/*-$@-*.o)
+	@echo
+	@echo " [-] Started build for $@"
+	@mkdir -p $(BUILD_DIR)
+	# Extracting
+	###
+	if [ ! -d "$(CC_DIR)" ]; then									\
+		echo " [-] Extracting LINUX-MIPSEL-TOOLS";					\
+		tar -xf $(DEPS_DIR)/cross-compilers/crossx86-mipsel-linux-musl-0.9.11.tar.xz -C $(DEPS_DIR)/cross-compilers;	\
+		echo " [+] Done extracting LINUX-MIPSEL-TOOLS";				\
+	fi
+	
+	if [ ! -d "$(LIBRESSL)" ]; then									\
+		echo " [-] Extracting LIBRESSL";							\
+		tar -xf $(DEPS_DIR)/libressl-2.6.3.tar.gz -C $(BUILD_DIR);			\
+		echo " [+] Done extracting LIBRESSL";						\
+	fi
+	
+	if [ ! -d "$(EVENT)" ]; then									\
+		echo " [-] Extracting LIBEVENT";							\
+		tar -xf $(DEPS_DIR)/libevent-2.1.8-stable.tar.gz -C $(BUILD_DIR);			\
+		echo " [+] Done extracting LIBEVENT";						\
+	fi
+	
+	if [ ! -d "$(ZLIB)" ]; then						\
+		echo " [-] Extracting LIBZLIB";							\
+		tar -xf	$(DEPS_DIR)/zlib-1.2.11.tar.gz -C $(BUILD_DIR);		\
+		echo " [+] Done extracting LIBZLIB";							\
+	fi
+	
+	if [ ! -d "$(TOR)" ]; then								\
+		echo " [-] Extracting LIBTOR";							\
+		unzip $(DEPS_DIR)/tor-master.zip -d $(BUILD_DIR);						\
+		echo " [+] Done extracting LIBTOR";						\
+	fi
+	# Building
+	###
+	@mkdir -p $(LIB)/linux-mipsel
+	if [ ! -f "$(LIBRESSL)/ssl/.libs/libssl.a" ]; then					\
+		echo " [-] Building LIBRESSL";							\
+		cd $(LIBRESSL) && ./configure --host=mipsel-linux-musl --enable-static --disable-shared \
+			--prefix=$(BUILD_DIR) PATH="$(CC_DIR):$PATH" CFLAGS="-static" && \
+			make install PATH="$(CC_DIR):$$PATH" && \
+		cp $(BUILD_DIR)/lib/libcrypto.a $(LIB)/linux-mipsel;				\
+		cp $(BUILD_DIR)/lib/libssl.a $(LIB)/linux-mipsel;				\
+		cp $(BUILD_DIR)/lib/libtls.a $(LIB)/linux-mipsel;				\
+		echo " [+] Done building LIBRESSL";						\
+	else											\
+		echo " [*] Skipping building LIBRESSL";						\
+	fi
+	
+	if [ ! -f "$(EVENT)/.libs/libevent.a" ]; then					\
+		echo " [-] Building LIBEVENT";							\
+		cd $(EVENT) && ./configure --host=mipsel-linux-musl --enable-static --disable-shared --disable-openssl  \
+			--prefix=$(BUILD_DIR) PATH="$(CC_DIR):$$PATH" CFLAGS="-static -I$(LIBRESSL_INC)" LDFLAGS="-L$(LIBRESSL)/ssl/.libs -L$(LIBRESSL)/crypto/.libs" && \
+			make install PATH="$(CC_DIR):$$PATH" LDFLAGS="-L$(LIBRESSL)/ssl/.libs -lssl -L$(LIBRESSL)/crypto/.libs -lcrypto";					\
+		cp $(BUILD_DIR)/lib/libevent*.a $(LIB)/linux-mipsel;				\
+		echo " [+] Done building LIBEVENT";						\
+	else											\
+		echo " [*] Skipping building LIBEVENT";						\
+	fi
+	
+	if [ ! -f "$(ZLIB)/libz.a" ]; then					\
+		echo " [-] Building LIBZLIB";									\
+		cd $(ZLIB) && PATH="$(CC_DIR):$$PATH" CFLAGS="-static" ./configure --static --shared --prefix=$(BUILD_DIR) && 	\
+			make install PATH="$(CC_DIR):$$PATH" CFLAGS="-static";							\
+		cp $(BUILD_DIR)/lib/libz.a $(LIB)/linux-mipsel;				\
+		echo " [+] Done building LIBZLIB";						\
+	else											\
+		echo " [*] Skipping building LIBZLIB";						\
+	fi
+	
+	./configure --host=mipsel-linux-musl --disable-tool-name-check --enable-static-openssl --enable-static-libevent --enable-static-zlib 
+	--with-openssl-dir=/home/x2f/Desktop/HiveNet/deps/build/linux-mipsel/libressl-2.6.3 
+	--with-libevent-dir=/home/x2f/Desktop/HiveNet/deps/build/linux-mipsel/libevent-2.1.8-stable 
+	--with-zlib-dir=/home/x2f/Desktop/HiveNet/deps/build/linux-mipsel/zlib-1.2.11 
+	PATH="/home/x2f/Desktop/HiveNet/deps/cross-compilers/mipsel-linux-musl/bin:$PATH" CFLAGS="-static" LDFLAGS="-L/home/x2f/Desktop/HiveNet/deps/build/lib"
+	
+	if [ ! -f "$(TOR)/src/or/tor" ]; then						\
+		echo " [-] Building LIBTOR";							\
+		cd $(TOR) && ./autogen.sh && --host=mipsel-linux-musl --disable-tool-name-check 			\
+			--enable-static-libevent --enable-static-openssl --enable-static-zlib \
+			--with-libevent-dir=$(EVENT) --with-openssl-dir=$(LIBRESSL) --with-zlib-dir=$(ZLIB)		\
+			--disable-asciidoc --disable-systemd --disable-system-torrc --prefix=/tmp PATH="$(CC_DIR):$$PATH" CFLAGS="-static" LDFLAGS="-L$(BUILD_DIR)/lib" &&		\
+			sed -e 's|libevent-2.1.8-stable/libevent.a|libevent-2.1.8-stable/.libs/libevent.a|' \
+				-e 's|libressl-2.6.3/libssl.a|libressl-2.6.3/ssl/.libs/libssl.a|' \
+				-e 's|libressl-2.6.3/libcrypto.a|libressl-2.6.3/crypto/.libs/libcrypto.a|' Makefile > Makefile.sed && \
+			mv Makefile.sed Makefile && make PATH="$(CC_DIR):$$PATH" CFLAGS="" LDFLAGS="" CC="$(MUSL_CC)" LD="$(MUSL_LD)";																			\
+		cp $(TOR)/src/or/libtor*.a $(LIB)/linux-mipsel;				\
+		cp $(TOR)/src/common/libor*.a $(LIB)/linux-mipsel;				\
+		cp $(TOR)/src/common/libcurve25519_donna.a $(LIB)/linux-mipsel;				\
+		cp $(TOR)/src/trunnel/libor-trunnel*.a $(LIB)/linux-mipsel;				\
+		cp $(TOR)/src/ext/ed25519/ref10/libed25519_ref10.a $(LIB)/linux-mipsel;				\
+		cp $(TOR)/src/ext/ed25519/donna/libed25519_donna.a $(LIB)/linux-mipsel;				\
+		cp $(TOR)/src/ext/keccak-tiny/libkeccak-tiny.a $(LIB)/linux-mipsel;				\
+		echo " [+] Done building LIBTOR";						\
+	else											\
+		echo " [*] Skipping building LIBTOR";						\
+	fi
+	
+	@echo " [-] Building torinstance"
+	@make -C torinstance linux-mipsel
+	@echo " [+] Done building torinstance"
+	@echo " [-] Building dnstunnel"
+	@make -C dnstunnel linux-mipsel
+	@echo " [+] Done building dnstunnel"
+	@echo " [-] Building hivenet"
+	@make -C hivenet linux-mipsel
+	@echo " [+] Done building hivenet"
+	@echo " [-] Linking objects to hivenet-$@ build"
+	@$(MUSL_CC) $(DBGFLAGS) \
+		-D"memset_s(W,WL,V,OL)=memset(W,V,OL)" \
+		$(OBJ)/torinstance-$@-torinstance-dbg.o \
+		$(OBJ)/dnstunnel-$@-dnstunnel-dbg.o \
+		$(OBJ)/hivenet-$@-hivenet-dbg.o \
+		$(DBG_LDFLAGS) -o $(BIN)/hivenet-$@-dbg
+	@$(MUSL_CC) -s -O3 -Os $(RELFLAGS) \
+		$(OBJ)/torinstance-$@-torinstance-rel.o \
+		$(OBJ)/dnstunnel-$@-dnstunnel-rel.o \
+		$(OBJ)/hivenet-$@-hivenet-rel.o \
+		$(REL_LDFLAGS) -o $(BIN)/hivenet-$@
+	@$(STRIP) $(STRIPFLAGS) $(BIN)/hivenet-$@
+	@echo " [+] Done linking objects to hivenet-$@ build"
+	@echo " [+] Done build for $@"
+	@echo
